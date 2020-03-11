@@ -1,0 +1,6 @@
+function TradeManager_handleScriptingZone(zone, object)
+  local player_color = Zones_getZoneNameByGuid(zone.getGUID())
+  if PlayerTracker_isValid(player_color) and PlayerTracker_isSeated(player_color) then
+    Locks_giveTo(object, {player_color = player_color})
+  end
+end

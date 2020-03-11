@@ -1,0 +1,38 @@
+-- Tracks players sitting and standing --
+
+local PlayerTracker_sitting = {}
+
+function PlayerTracker_sit(player_color)
+  PlayerTracker_sitting[player_color] = Player[player_color].steam_id
+end
+
+function PlayerTracker_stand(player_color)
+  PlayerTracker_sitting[player_color] = nil
+end
+
+function PlayerTracker_isValid(player_color)
+  for _, v in ipairs(valid_players) do
+    if v == player_color then
+      return true
+    end
+  end
+  return false
+end
+
+function PlayerTracker_isAdmin(player_color)
+  return Player[player_color].admin
+end
+
+function PlayerTracker_findStanding()
+  local retval = {}
+  for player_color, player_id in pairs(PlayerTracker_sitting) do
+    if not Player[player_color].seated then
+      retval[player_color] = player_id
+    end
+  end
+  return retval
+end
+
+function PlayerTracker_isSeated(player_color)
+  return Player[player_color].seated
+end

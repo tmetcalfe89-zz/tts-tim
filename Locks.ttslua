@@ -1,0 +1,23 @@
+function Locks_giveTo(object, options)
+  DescriptionParser_addValue(object, "Owner", Locks_getPlayerId(options))
+end
+
+function Locks_belongsTo(object, options)
+  return DescriptionParser_getValue(object, "Owner") == Locks_getPlayerId(options)
+end
+
+function Locks_getPlayerId(options)
+  local player_id = options["player_id"]
+  if options["player_color"] then
+    player_id = Player[options["player_color"]].steam_id
+  end
+  return player_id
+end
+
+function Locks_getPlayerBelongings(player_id)
+  return Util_filterITable(getAllObjects(),
+    function(i, v)
+      return DescriptionParser_getValue(v, "Owner") == player_id
+    end
+  )
+end

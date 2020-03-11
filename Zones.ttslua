@@ -1,0 +1,12 @@
+function Zones_getZoneGuidByName(name)
+  return zones[name]
+end
+
+function Zones_getZoneNameByGuid(guid)
+  for k, v in pairs(zones) do
+    if v == guid then
+      return k
+    end
+  end
+  return nil
+end

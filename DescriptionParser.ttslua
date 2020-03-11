@@ -1,0 +1,27 @@
+local DescriptionParser_options = {
+  entry_delimiter = "|",
+  pair_delimiter = ":"
+}
+
+function DescriptionParser_changeOptions(options)
+  DescriptionParser_options = options
+end
+
+function DescriptionParser_getValue(object, key)
+  local map = Util_splitStringIntoMap(object.getDescription(), DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter)
+  for k, v in pairs(map) do
+    if k == key then
+      return v
+    end
+  end
+  return nil
+end
+
+function DescriptionParser_addValue(object, key, value)
+  local map = {}
+  if object.getDescription() then
+    map = Util_splitStringIntoMap(object.getDescription(), DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter)
+  end
+  map[key] = value
+  object.setDescription(Util_joinMapToString(map, DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter))
+end

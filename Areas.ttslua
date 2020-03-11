@@ -1,0 +1,5 @@
+-- Works with global databases to find relative areas given centers --
+
+function Areas_getArea(center_name, area_name)
+  return Util_rotateAaroundB(areas[area_name], centers[center_name], 0)
+end

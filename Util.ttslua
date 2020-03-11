@@ -1,0 +1,75 @@
+function Util_splitStringIntoArray(input, delimiter)
+  local returnarr = {}
+  local i = 1
+  for str in string.gmatch(input, '([^' .. delimiter .. ']+)') do
+    returnarr[i] = str
+    i = i + 1
+  end
+  return returnarr
+end
+
+function Util_splitStringIntoPair(input, delimiter)
+  local i = 1
+  local key
+  local value
+  for str in string.gmatch(input, '([^' .. delimiter .. ']+)') do
+    if i == 1 then
+      key = str
+    end
+    if i == 2 then
+      value = str
+    end
+    i = i + 1
+  end
+
+  local retPair = {}
+  retPair[key] = value
+  return retPair
+end
+
+function Util_splitStringIntoMap(input, entry_delimiter, pair_delimiter)
+  local retval = {}
+  local split = Util_splitStringIntoArray(input, entry_delimiter)
+  for _, pair in ipairs(split) do
+    local split_pair = Util_splitStringIntoPair(pair, pair_delimiter)
+    for key, value in pairs(split_pair) do
+      retval[key] = value
+    end
+  end
+  return retval
+end
+
+function Util_joinMapToString(map, entry_delimiter, pair_delimiter)
+  local retval = ""
+  for key, value in pairs(map) do
+    retval = retval..key..pair_delimiter..value..entry_delimiter
+  end
+  return retval:sub(1, #retval - #entry_delimiter)
+end
+
+function Util_rotateAaroundB(a, b, degrees)
+    local angle = math.rad(-degrees)
+    local rotated_x = (math.cos(angle)*(a.x))-(math.sin(angle)*(a.z))+b.x
+    local rotated_z = (math.sin(angle)*(a.x))+(math.cos(angle)*(a.z))+b.z;
+    return Vector(rotated_x, a.y + b.y, rotated_z)
+end
+
+function Util_filterTable(itable, filter)
+  local retval = {}
+  for k, v in pairs(itable) do
+    if filter(k, v) then
+      retval[k] = v
+    end
+  end
+  return retval
+end
+
+function Util_filterITable(itable, filter)
+  local retval = {}
+  for i, v in ipairs(itable) do
+    if filter(i, v) then
+      table.insert(retval, v)
+    end
+  end
+  return retval
+end

@@ -1,0 +1,13 @@
+-- Manages locked items --
+
+-- Checks if the given object belongs to the given player color
+-- If not, cancels the event by returning false and dropping the object
+function LockManager_handlePickup(object, player_color)
+  if not Locks_belongsTo(object, {player_color = player_color}) and not PlayerTracker_isAdmin(player_color) then
+    log(Player[player_color].steam_name.." attempted to pick up "..object.getName())
+    object.drop()
+    return false
+  else
+    return true
+  end
+end

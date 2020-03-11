@@ -1,0 +1,102 @@
+-- Works with global databases to find bags by name --
+
+function Bags_getBagGuid(name)
+  return bags[name]
+end
+
+function Bags_getBagByName(name)
+  return getObjectFromGUID(Bags_getBagGuid(name))
+end
+
+function Bags_isInBag(bag_name, options)
+  return Bags_findInBag(bag_name, options) ~= -1
+end
+
+function Bags_findInBag(bag_name, options)
+  if options["index"] then
+    return options["index"]
+  end
+
+  local bag = Bags_getBagByName(bag_name)
+  for i, v in ipairs(bag.getObjects()) do
+    if v.name == options.name then
+      return i - 1
+    end
+  end
+  return -1
+end
+
+function Bags_takeFromBag(bag_name, options)
+  local bag = Bags_getBagByName(bag_name)
+
+  if options["shuffle"] then
+    bag.shuffle()
+  end
+
+  if Bags_isInBag(bag_name, options) then
+    local i = Bags_findInBag(bag_name, options)
+    bag.takeObject({
+      index = i,
+      position = options["position"] or nil,
+      rotation = options["rotation"] or nil,
+      smooth = options["smooth"] or false,
+      callback_function =
+      function(object_spawned, name)
+        if options["on_success"] then
+          options["on_success"](object_spawned)
+        end
+      end
+    })
+    return true
+  else
+    if options["on_failure"] then
+      options["on_failure"]()
+    end
+    return false
+  end
+end
+
+function Bags_cloneFromBag(bag_name, options)
+  local bag = Bags_getBagByName(bag_name)
+
+  if options["shuffle"] then
+    bag.shuffle()
+  end
+
+  if Bags_isInBag(bag_name, options) then
+    local i = Bags_findInBag(bag_name, options)
+    bag.takeObject({
+      index = i,
+      smooth = options["smooth"] or false,
+      callback_function =
+      function(object_spawned, name)
+        local object_cloned = object_spawned.clone({
+          position = options["position"]
+        })
+        bag.putObject(object_spawned)
+        if options["on_success"] then
+          Wait.condition(
+            function()
+              options["on_success"](object_cloned)
+            end
+            ,
+            function()
+              return object_cloned.guid ~= object_spawned.guid
+            end
+          )
+        end
+      end
+    })
+    return true
+  else
+    if options["on_failure"] then
+      options["on_failure"]()
+    end
+    return false
+  end
+end
+
+function Bags_putInBag(bag_name, object)
+  local bag = Bags_getBagByName(bag_name)
+  bag.putObject(object)
+end
