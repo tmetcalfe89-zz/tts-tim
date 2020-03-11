@@ -1,0 +1,13 @@
+function Uninteractables_lock(guid)
+  getObjectFromGUID(guid).interactable = false
+end
+
+function Uninteractables_unlock(guid)
+  getObjectFromGUID(guid).interactable = true
+end
+
+function Uninteractables_lockAll(guids)
+  for _, guid in ipairs(guids) do
+    Uninteractables_lock(guid)
+  end
+end
