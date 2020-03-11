@@ -1,0 +1,67 @@
+#include Gen1/Areas
+#include Gen1/Util
+#include Gen1/Bags
+#include Gen1/PlayerTracker
+#include Gen1/Locks
+#include Gen1/DescriptionParser
+#include Gen1/Zones
+
+#include Gen1/SaveManager
+#include Gen1/LockManager
+#include Gen1/TradeManager
+
+bags = {
+  main_save = "726ddd",
+  blank_saves = "b2f315"
+}
+
+centers = {
+  Red = vector(-45, 1, -40),
+  Orange = vector(-27, 1, -40),
+  Yellow = vector(-9, 1, -40),
+  Green = vector(9, 1, -40),
+  Teal = vector(27, 1, -40),
+  Blue = vector(45, 1, -40)
+}
+
+areas = {
+  drop_off = vector(0, 3, 15)
+}
+
+valid_players = {
+  "Red", "Orange", "Yellow", "Green", "Teal", "Blue"
+}
+
+zones = {
+  Red = "98934b",
+  Orange = "75acfa",
+  Yellow = "3ffe0b",
+  Green = "2b41a9",
+  Teal = "4fd42f",
+  Blue = "b345d2"
+}
+
+function onPlayerChangeColor(player_color)
+  if PlayerTracker_isValid(player_color) then
+    log("Now sitting "..player_color)
+    PlayerTracker_sit(player_color)
+    SaveManager_handleSit(player_color)
+  else
+    log("Searching for standing players")
+    local standing_players = PlayerTracker_findStanding()
+    for player_color, player_id in pairs(standing_players) do
+      log("Now standing "..player_color)
+      SaveManager_stashPlayerSave(player_id)
+      log("Stashed player save for "..player_id)
+      PlayerTracker_stand(player_color)
+    end
+  end
+end
+
+function onObjectPickUp(player_color, picked_up_object)
+  LockManager_handlePickup(picked_up_object, player_color)
+end
+
+function onObjectEnterScriptingZone(zone, enter_object)
+  TradeManager_handleScriptingZone(zone, enter_object)
+end
