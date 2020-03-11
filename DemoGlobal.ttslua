@@ -1,14 +1,14 @@
-#include Gen1/Areas
-#include Gen1/Util
-#include Gen1/Bags
-#include Gen1/PlayerTracker
-#include Gen1/Locks
-#include Gen1/DescriptionParser
-#include Gen1/Zones
+#include tts-tim/Areas
+#include tts-tim/Util
+#include tts-tim/Bags
+#include tts-tim/PlayerTracker
+#include tts-tim/Locks
+#include tts-tim/DescriptionParser
+#include tts-tim/Zones
 
-#include Gen1/SaveManager
-#include Gen1/LockManager
-#include Gen1/TradeManager
+#include tts-tim/SaveManager
+#include tts-tim/LockManager
+#include tts-tim/TradeManager
 
 bags = {
   main_save = "726ddd",
