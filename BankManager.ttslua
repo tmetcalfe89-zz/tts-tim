@@ -1,0 +1,81 @@
+local BankManager_currencyList = {}
+local BankManager_ready = false
+
+function BankManager_buildCurrencyList()
+  log("Initializing currency list")
+  BankManager_ready = false
+
+  local currency_bank = getObjectFromGUID(bags.currency_bank)
+  local currency_count = #currency_bank.getObjects()
+  for i=1,currency_count do
+    Bags_takeFromBag("currency_bank", {
+      index = 0,
+      position = vector(13, 4.17 + i, 55),
+      on_success =
+      function(currency)
+        BankManager_addCurrency(currency)
+        if i == currency_count then
+          table.sort(BankManager_currencyList,
+            function(a, b)
+              return a.value > b.value
+            end
+          )
+          Wait.condition(
+            function()
+              BankManager_ready = true
+              log("Currency list created")
+            end
+            ,
+            function()
+              return #currency_bank.getObjects() == currency_count
+            end
+          )
+        end
+      end
+    })
+  end
+end
+
+function BankManager_addCurrency(currency)
+  local type = Currency_getType(currency)
+  local value = Currency_getValue(currency, type)
+  local guid = currency.getGUID()
+  local currency_entry = {
+    type = type,
+    value = tonumber(value),
+    guid = guid
+  }
+  table.insert(BankManager_currencyList, currency_entry)
+end
+
+function BankManager_giveCurrency(player_color, give_amount, currency_type, options)
+  if not BankManager_ready then
+    return false
+  end
+  local drop_off = Areas_getArea(player_color, "drop_off")
+  local currency_to_give = {}
+  while give_amount > 0 do
+    for i, currency in ipairs(BankManager_currencyList) do
+      if currency.value <= give_amount and currency.type == currency_type then
+        table.insert(currency_to_give, {guid = currency.guid})
+        give_amount = give_amount - currency.value
+        break
+      end
+    end
+  end
+  Bags_cloneAllFromBag("currency_bank", currency_to_give, {
+    position = drop_off,
+    on_success =
+    function(object)
+      Locks_giveTo(object, {player_color = player_color})
+    end
+    ,
+    on_finished =
+    function()
+      if options["on_finished"] then
+        options["on_finished"]()
+      end
+    end
+  })
+  return true
+end

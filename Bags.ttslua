@@ -19,6 +19,9 @@ function Bags_findInBag(bag_name, options)
 
   local bag = Bags_getBagByName(bag_name)
   for i, v in ipairs(bag.getObjects()) do
+    if v.guid == options.guid then
+      return i - 1
+    end
     if v.name == options.name then
       return i - 1
     end
@@ -94,6 +97,49 @@ function Bags_cloneFromBag(bag_name, options)
     end
     return false
   end
+end
+
+function Bags_cloneAllFromBag(bag_name, clone_list, options)
+  local bag_count = #Bags_getBagByName(bag_name).getObjects()
+  local clone_complete = 0
+  for i, v in ipairs(clone_list) do
+    Wait.condition(
+      function()
+        Bags_cloneFromBag(bag_name, {
+          index = v.index,
+          guid = v.guid,
+          name = v.name,
+          shuffle = options.shuffle,
+          smooth = options.smooth,
+          position = options.position,
+          on_success = options.on_success,
+          on_failure = options.failure
+        })
+        clone_complete = clone_complete + 1
+      end
+      ,
+      function()
+        return #Bags_getBagByName(bag_name).getObjects() == bag_count
+      end
+    )
+  end
+  Wait.condition(
+    function()
+      Wait.frames(
+        function()
+          if options["on_finished"] then
+            options.on_finished()
+          end
+        end
+        ,
+        1
+      )
+    end
+    ,
+    function()
+      return clone_complete == #clone_list
+    end
+  )
 end
 
 function Bags_putInBag(bag_name, object)

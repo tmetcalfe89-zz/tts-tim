@@ -6,14 +6,17 @@
 #include tts-tim/DescriptionParser
 #include tts-tim/Zones
 #include tts-tim/Uninteractables
+#include tts-tim/Currency
 
 #include tts-tim/SaveManager
 #include tts-tim/LockManager
 #include tts-tim/TradeManager
+#include tts-tim/BankManager
 
 bags = {
   main_save = "726ddd",
-  blank_saves = "b2f315"
+  blank_saves = "b2f315",
+  currency_bank = "ce91f0"
 }
 
 centers = {
@@ -49,13 +52,19 @@ uninteractables = {
 
 function onLoad(save_state)
   Uninteractables_lockAll(uninteractables)
+  BankManager_buildCurrencyList()
 end
 
 function onPlayerChangeColor(player_color)
   if PlayerTracker_isValid(player_color) then
     log("Now sitting "..player_color)
     PlayerTracker_sit(player_color)
-    SaveManager_handleSit(player_color)
+    if SaveManager_fetchPlayerSave(player_color) then
+      log("Found save for "..Player[player_color].steam_name)
+    else
+      SaveManager_createPlayerSave(player_color)
+      log("Created save for "..Player[player_color].steam_name)
+    end
   else
     log("Searching for standing players")
     local standing_players = PlayerTracker_findStanding()
@@ -74,4 +83,13 @@ end
 
 function onObjectEnterScriptingZone(zone, enter_object)
   TradeManager_handleScriptingZone(zone, enter_object)
+end
+
+function onChat(message, player)
+  BankManager_giveCurrency(player.color, tonumber(message), "Euro", {
+    on_finished =
+    function()
+      log("Player value: "..Currency_getPlayerValue(player.steam_id, "Euro"))
+    end
+  })
 end

@@ -1,14 +1,5 @@
 -- Manages player saves --
 
-function SaveManager_handleSit(player_color)
-  if SaveManager_fetchPlayerSave(player_color) then
-    log("Found save for "..Player[player_color].steam_name)
-  else
-    SaveManager_createPlayerSave(player_color)
-    log("Created save for "..Player[player_color].steam_name)
-  end
-end
-
 -- Grabs the player save bag from the main save bag.
 -- Delivers it to the player.
 function SaveManager_fetchPlayerSave(player_color)
