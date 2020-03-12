@@ -24,6 +24,7 @@ function BankManager_buildCurrencyList()
             function()
               BankManager_ready = true
               log("Currency list created")
+              log(BankManager_currencyList)
             end
             ,
             function()
@@ -48,34 +49,30 @@ function BankManager_addCurrency(currency)
   table.insert(BankManager_currencyList, currency_entry)
 end
 
-function BankManager_giveCurrency(player_color, give_amount, currency_type, options)
+function BankManager_giveCurrency(player_color, give_amount, currency_type)
   if not BankManager_ready then
     return false
   end
   local drop_off = Areas_getArea(player_color, "drop_off")
   local currency_to_give = {}
+  local gave_currency
   while give_amount > 0 do
+    gave_currency = false
     for i, currency in ipairs(BankManager_currencyList) do
       if currency.value <= give_amount and currency.type == currency_type then
         table.insert(currency_to_give, {guid = currency.guid})
         give_amount = give_amount - currency.value
+        gave_currency = true
         break
       end
     end
+    if gave_currency == false then
+      log(give_amount)
+      break
+    end
   end
   Bags_cloneAllFromBag("currency_bank", currency_to_give, {
-    position = drop_off,
-    on_success =
-    function(object)
-      Locks_giveTo(object, {player_color = player_color})
-    end
-    ,
-    on_finished =
-    function()
-      if options["on_finished"] then
-        options["on_finished"]()
-      end
-    end
+    position = drop_off
   })
   return true
 end
