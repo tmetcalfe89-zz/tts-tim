@@ -1,7 +1,15 @@
+-- Works with global databases to index scripting zones by name --
+
+-- Gets the guid of the zone given the name.
+-- @param name [string] The name of the zone.
+-- @returns [string] The guid of the zone.
 function Zones_getZoneGuidByName(name)
   return zones[name]
 end
 
+-- Gets the name of the zone by the guid.
+-- @param guid [string] The guid of the zone.
+-- @returns [string] The name of the zone.
 function Zones_getZoneNameByGuid(guid)
   for k, v in pairs(zones) do
     if v == guid then

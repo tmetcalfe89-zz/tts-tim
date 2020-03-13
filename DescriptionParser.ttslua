@@ -1,27 +1,60 @@
+-- Parses a map of key/value pairs from an object's description. --
+-- Allows for simple in-game editing of values.
+
+-- The default options for delimiters.
 local DescriptionParser_options = {
+  -- Breaks the list of entries up into individual entries.
   entry_delimiter = "|",
+  -- Breaks each pair up into a key/value pair.
   pair_delimiter = ":"
 }
 
+-- Sets the options.
+-- @param options.entry_delimiter [string] Breaks the list of entries up into individual entries.
+-- @param options.pair_delimiter [string] Breaks each pair up into a key/value pair.
 function DescriptionParser_changeOptions(options)
   DescriptionParser_options = options
 end
 
+-- Gets an object's value associated with a given key.
+-- @param object [object] The object who should hold the pair.
+-- @param key [string] The key to search for.
+-- @returns The value matching the key. Returns nil if none were found.
 function DescriptionParser_getValue(object, key)
+  -- Split the description up into an array of key/value pairs.
   local map = Util_splitStringIntoMap(object.getDescription(), DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter)
+  -- Iterate through those key/value pairs.
   for k, v in pairs(map) do
+    -- If the key matches the given key, return it.
     if k == key then
       return v
     end
   end
+  -- If none matched, return nil.
   return nil
 end
 
+-- Adds a key/value pair to an object if it doesn't exist, or sets it if it does.
+-- Sets the description of the object to update the pair.
+-- @param object [object] The object who should hold the pair.
+-- @param key [string] The key of the pair.
+-- @param value [string] The value of the pair.
 function DescriptionParser_addValue(object, key, value)
+  -- Initialize the map.
   local map = {}
-  if object.getDescription() then
-    map = Util_splitStringIntoMap(object.getDescription(), DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter)
+  -- Fail if the object's description is empty.
+  if not object.getDescription() then
+    return false
   end
+  -- Grab the map from the object's description.
+  map = Util_splitStringIntoMap(object.getDescription(), DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter)
+  -- Set the value at the given key.
   map[key] = value
+  -- Remove the key if the value is empty.
+  if map[key] == "" then
+    map[key] = nil
+  end
+  -- Set the description to the joined version of the string.
   object.setDescription(Util_joinMapToString(map, DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter))
+  return true
 end

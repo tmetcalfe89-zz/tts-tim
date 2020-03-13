@@ -85,11 +85,24 @@ function onObjectEnterScriptingZone(zone, enter_object)
   TradeManager_handleScriptingZone(zone, enter_object)
 end
 
+function onObjectEnterContainer(container, enter_object)
+  if container.guid == bags["currency_bank"] then
+    BankManager_addCurrency(enter_object)
+  elseif Locks_belongsTo(container) ~= nil then
+    Currency_stashCurrency(container, enter_object)
+  end
+end
+
+function onObjectLeaveContainer(container, leave_object)
+  if Locks_belongsTo(container) ~= nil then
+    Currency_unstashCurrency(container, leave_object)
+  end
+end
+
 function onChat(message, player)
-  BankManager_giveCurrency(player.color, tonumber(message), "Euro", {
-    on_finished =
-    function()
-      log("Player value: "..Currency_getPlayerValue(player.steam_id, "Euro"))
-    end
-  })
+  if message == "a" then
+    log(player.steam_name.."'s value: "..Currency_getPlayerValue(player.steam_id, "Euro"))
+  else
+    BankManager_giveCurrency(player.color, tonumber(message) * 100, "Euro")
+  end
 end

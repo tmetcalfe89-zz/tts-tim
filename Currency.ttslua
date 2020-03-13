@@ -1,21 +1,90 @@
-function Currency_getValue(object)
-  return DescriptionParser_getValue(object, "CValue")
+-- Works with the description on an object to determine its currency types and values. --
+-- To add a currency pair to an object, add the following string (separated from other description key/value pairs by a | if necessary):
+-- Currency:<Type1>.<Value1>,<Type2>.<Value2>...<TypeN>.<ValueN>
+-- Values cannot have a decimal value because of rounding issues. I recommend multiplying the value of the currency by 100 if you need cents.
+
+-- Gets the value of the given type from a given currency object.
+-- @param object [object] The given currency object.
+-- @param currency_type [string] The name of the currency type.
+-- @returns [number] The value of the currency, or 0 if none exists.
+function Currency_getValue(object, currency_type)
+  return tonumber(Currency_getValues(object)[currency_type]) or 0
+  -- return tonumber(DescriptionParser_getValue(object, "C_"..currency_type)) or 0
 end
 
-function Currency_getType(object)
-  return DescriptionParser_getValue(object, "CType")
+function Currency_getValues(object)
+  local currency_values_string = DescriptionParser_getValue(object, "Currency")
+  local retval = {}
+  for currency_type, currency_value in pairs(Util_splitStringIntoMap(currency_values_string, ",", ".")) do
+    retval[currency_type] = tonumber(currency_value) or 0
+  end
+  return retval
 end
 
+-- Gets the current value of all currency of a given type owned by a given player.
+-- @param player_id [string] The id of the player.
+-- @param currency_type [string] The type of currency.
+-- @returns [number] The total value of the given currency owned by the given player.
 function Currency_getPlayerValue(player_id, currency_type)
-  local current_value = 0
+  -- Initialize the variable that will accumulate the player's value.
+  local value = 0
+  -- Iterate through the player's belongings.
   for i, object in ipairs(Locks_getPlayerBelongings(player_id)) do
+    -- Figure out how many there are in a given object. This accounts for stacks.
     local object_count = object.getQuantity()
-    if object_count == -1 then
+    -- NOTE: TTS sends back -1 if the object isn't a stack. Set it to 1.
+    if object_count == -1 or object.tag == "Bag" then
       object_count = 1
     end
-    if Currency_getType(object) == currency_type then
-      current_value = current_value + Currency_getValue(object) * object_count
-    end
+    -- If the object's currency type matches the given currency type, add its value to the accumulator.
+    value = value + Currency_getValue(object, currency_type) * object_count
   end
-  return current_value
+  -- Return the accumulated value.
+  return value
+end
+
+-- Called when a currency object enters a bag.
+-- Adds the value(s) of the currency to the bag itself.
+-- @param bag [object] The bag the currency is entering.
+-- @param currency_object [object] The currency that is entering the bag.
+function Currency_stashCurrency(bag, currency_object)
+  -- Get the values attached to the object.
+  local currency_values = Currency_getValues(currency_object)
+  -- If the object has values and the bag is in fact a bag...
+  if Util_tableHasEntries(currency_values) and bag.tag == "Bag" then
+    -- Get the values attached to the bag.
+    local bag_currency_values = Currency_getValues(bag)
+    -- Figure out how many there are in a given object. This accounts for stacks.
+    local object_count = Util_getStackSize(currency_object)
+    -- Iterate through all values attached to the object and add them to the bag's values.
+    for currency_type, currency_value in pairs(currency_values) do
+      bag_currency_values[currency_type] = Currency_getValue(bag, currency_type) + currency_value * object_count
+    end
+    DescriptionParser_addValue(bag, "Currency", Util_joinMapToString(bag_currency_values, ",", "."))
+  end
+end
+
+-- Called when a currency object leaves a bag.
+-- Subtracts the value(s) of the currency to the bag itself.
+-- @param bag [object] The bag the currency is leaving.
+-- @param currency_object [object] The currency that is leaving the bag.
+function Currency_unstashCurrency(bag, currency_object)
+  -- Get the values attached to the object.
+  local currency_values = Currency_getValues(currency_object)
+  -- If the object has values and the bag is in fact a bag...
+  if Util_tableHasEntries(currency_values) and bag.tag == "Bag" then
+    -- Get the values attached to the bag.
+    local bag_currency_values = Currency_getValues(bag)
+    -- Figure out how many there are in a given object. This accounts for stacks.
+    local object_count = Util_getStackSize(currency_object)
+    -- Iterate through all values attached to the object and subtract them from the bag's values.
+    for currency_type, currency_value in pairs(currency_values) do
+      bag_currency_values[currency_type] = Currency_getValue(bag, currency_type) - currency_value * object_count
+      -- If the current currency type is gone, remove it from the description.
+      if bag_currency_values[currency_type] <= 0 then
+        bag_currency_values[currency_type] = nil
+      end
+    end
+    DescriptionParser_addValue(bag, "Currency", Util_joinMapToString(bag_currency_values, ",", "."))
+  end
 end

@@ -1,11 +1,36 @@
+-- Manages locks on items, through their descriptions. --
+-- To set the owner of an object, add the following string (separated from other description key/value pairs by a | if necessary)
+-- Owner:<OwnerId>
+
+-- Registers the player that matches the given options as the owner of the given object.
+-- NOTE: Either player_id or player_color must be given.
+-- @param object [object] The object to give to the player.
+-- @param options.player_id [string] The id of the player. Optional. Priority 2.
+-- @param options.player_color [string] The color of the player. Optional. Priority 1.
 function Locks_giveTo(object, options)
   DescriptionParser_addValue(object, "Owner", Locks_getPlayerId(options))
 end
 
+-- Checks whether or not the given object belongs to the player that matches the given options.
+-- Checks who this belongs to if it doesn't have options.
+-- NOTE: Either player_id or player_color must be given.
+-- @param object [object] The object to check ownership of.
+-- @param options.player_id [string] The id of the player. Optional. Priority 2.
+-- @param options.player_color [string] The color of the player. Optional. Priority 1.
+-- @returns [boolean] Whether or not the object belongs to the player.
 function Locks_belongsTo(object, options)
-  return DescriptionParser_getValue(object, "Owner") == Locks_getPlayerId(options)
+  local owner = DescriptionParser_getValue(object, "Owner")
+  if options == nil then
+    return owner
+  end
+  return owner == Locks_getPlayerId(options)
 end
 
+-- Gets the player id from a given set of options.
+-- NOTE: Either player_id or player_color must be given.
+-- @param options.player_id [string] The id of the player. Optional. Priority 2.
+-- @param options.player_color [string] The color of the player. Optional. Priority 1.
+-- @returns [string] The player id of the matching player.
 function Locks_getPlayerId(options)
   local player_id = options["player_id"]
   if options["player_color"] then
@@ -14,6 +39,9 @@ function Locks_getPlayerId(options)
   return player_id
 end
 
+-- Get all objects belonging to the player with the given id.
+-- @param player_id [string] The id of the player.
+-- @returns [array] Array of objects belonging to the player.
 function Locks_getPlayerBelongings(player_id)
   return Util_filterITable(getAllObjects(),
     function(i, v)

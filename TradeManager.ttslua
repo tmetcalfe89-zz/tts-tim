@@ -1,3 +1,9 @@
+-- Manages trading --
+
+-- Called when an object enters a scripting zone.
+-- Transfers ownership to the owner of the zone, if applicable.
+-- @param zone [object] The zone entered.
+-- @param object [object] The object entering the zone.
 function TradeManager_handleScriptingZone(zone, object)
   local player_color = Zones_getZoneNameByGuid(zone.getGUID())
   if PlayerTracker_isValid(player_color) and PlayerTracker_isSeated(player_color) then

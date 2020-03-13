@@ -29,6 +29,9 @@ end
 
 function Util_splitStringIntoMap(input, entry_delimiter, pair_delimiter)
   local retval = {}
+  if input == nil or input == "" then
+    return retval
+  end
   local split = Util_splitStringIntoArray(input, entry_delimiter)
   for _, pair in ipairs(split) do
     local split_pair = Util_splitStringIntoPair(pair, pair_delimiter)
@@ -72,4 +75,29 @@ function Util_filterITable(itable, filter)
     end
   end
   return retval
+end
+
+function Util_getTableSize(table)
+  local retval = 0
+  for k, v in pairs(table) do
+    retval = retval + 1
+  end
+  return retval
+end
+
+function Util_tableHasEntries(table)
+  for k, v in pairs(table) do
+    return true
+  end
+  return false
+end
+
+function Util_getStackSize(stack)
+  -- Figure out how many there are in a given object. This accounts for stacks.
+  local count = stack.getQuantity()
+  -- NOTE: TTS sends back -1 if the object isn't a stack. Set it to 1.
+  if count == -1 or stack.tag == "Bag" then
+    count = 1
+  end
+  return count
 end

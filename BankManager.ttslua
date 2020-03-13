@@ -1,30 +1,37 @@
+-- Maintains a list of available currency and turns numbers into denominations. --
+
+-- Where the BankManager stores the list of available denominations.
 local BankManager_currencyList = {}
+-- Whether or not the BankManager has completed the currency list.
 local BankManager_ready = false
 
+-- Builds the currency list from the currency bank bag. This function doesn't
+-- actually do the math, it just grabs all objects in the currency bank, and
+-- drops them back in the currency bank. addCurrency is called when an object
+-- enters the currency bank, and adds the currency to the list.
 function BankManager_buildCurrencyList()
   log("Initializing currency list")
   BankManager_ready = false
 
+  -- Grab the currency bank bag.
   local currency_bank = getObjectFromGUID(bags.currency_bank)
+  -- Grab the number of items in the bag.
   local currency_count = #currency_bank.getObjects()
+  -- Iterate through all objects in the currency bank bag.
   for i=1,currency_count do
+    -- Take the top object from the currency bank bag. Drop it a little above the bag.
     Bags_takeFromBag("currency_bank", {
       index = 0,
-      position = vector(13, 4.17 + i, 55),
+      position = vector(13, 4.17 + i, 55), -- TODO: Remove fixed vector. Bad.
       on_success =
       function(currency)
-        BankManager_addCurrency(currency)
+        -- If this is the last one...
         if i == currency_count then
-          table.sort(BankManager_currencyList,
-            function(a, b)
-              return a.value > b.value
-            end
-          )
+          -- Wait for all of the objects to return to the currency bank bag, then become ready.
           Wait.condition(
             function()
               BankManager_ready = true
               log("Currency list created")
-              log(BankManager_currencyList)
             end
             ,
             function()
@@ -37,42 +44,78 @@ function BankManager_buildCurrencyList()
   end
 end
 
+-- Adds the given currency to the currency list.
+-- @param currency [object] The currency whose values will be added to the list.
+-- @returns [boolean] Whether or not the operation was successful. TODO: Expand this into error codes.
 function BankManager_addCurrency(currency)
-  local type = Currency_getType(currency)
-  local value = Currency_getValue(currency, type)
-  local guid = currency.getGUID()
-  local currency_entry = {
-    type = type,
-    value = tonumber(value),
-    guid = guid
-  }
-  table.insert(BankManager_currencyList, currency_entry)
-end
-
-function BankManager_giveCurrency(player_color, give_amount, currency_type)
-  if not BankManager_ready then
+  local values = Currency_getValues(currency)
+  if Util_getTableSize(values) == 0 then
     return false
   end
-  local drop_off = Areas_getArea(player_color, "drop_off")
+  table.insert(BankManager_currencyList, {
+    guid = currency.guid,
+    values = values
+  })
+  return true
+end
+
+-- Gives the player with the given color the given amount of currency in the given currency type.
+-- @param player_color [string] The color of the player to give the currency to.
+-- @param give_amount [number] The value of currency to give.
+-- @param currency_type [string] The type of currency to give.
+-- @returns [boolean] Whether or not the operation was successful. TODO: Expand this into error codes.
+function BankManager_giveCurrency(player_color, give_amount, currency_type)
+  -- Fail if not ready.
+  if not BankManager_ready then
+    log("Attempted to give currency when BankManager wasn't ready.")
+    return false
+  end
+  -- Fail if the player is invalid.
+  if not PlayerTracker_isValid(player_color) then
+    log("Attempted to give currency to invalid player "..player_color..".")
+    return false
+  end
+
+  -- Sorted on demand, depending on currency type.
+  table.sort(BankManager_currencyList,
+    function(a, b)
+      return (a.values[currency_type] or 0) > (b.values[currency_type] or 0)
+    end
+  )
+
+  -- Initialize the list of currency to give. This will later be passed to Bags_cloneAllFromBag.
   local currency_to_give = {}
+  -- Keep track of whether or not currency was given on a given attempt.
   local gave_currency
+  -- While there is still have currency to give...
   while give_amount > 0 do
+    -- Reset the flag.
     gave_currency = false
-    for i, currency in ipairs(BankManager_currencyList) do
-      if currency.value <= give_amount and currency.type == currency_type then
-        table.insert(currency_to_give, {guid = currency.guid})
-        give_amount = give_amount - currency.value
+    -- Iterate through currency list for the first denomination of the appropriate type whose value is less than the amount remaining.
+    -- This is why currency list is sorted by value. Going from highest denomination down, finding the highest without going over.
+    for i, currency_denomination in pairs(BankManager_currencyList) do
+      local currency_value = currency_denomination.values[currency_type]
+      if currency_value <= give_amount then
+        table.insert(currency_to_give, {guid = currency_denomination.guid})
+        give_amount = give_amount - currency_value
+        -- Yep, currency was given. Go back to the top of the currency list by breaking out of this iteration of the for loop.
         gave_currency = true
         break
       end
     end
+
+    -- If currency wasn't given, there isn't a proper denomination to give.
+    -- For example, if we started with 3 to give, but our lowest denomination is 2, we'll give the first two, but have 1 left over. We don't have a 1 to give, as 2 is our lowest.
     if gave_currency == false then
-      log(give_amount)
+      -- Notify the admins of the remaining amount to be given and break out.
+      log(player_color.." needs another "..give_amount.." in "..currency_type..".")
       break
     end
   end
+
+  -- Clone all of the currency to give.
   Bags_cloneAllFromBag("currency_bank", currency_to_give, {
-    position = drop_off
+    position = Areas_getArea(player_color, "drop_off")
   })
   return true
 end

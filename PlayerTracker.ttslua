@@ -1,31 +1,52 @@
--- Tracks players sitting and standing --
+-- Tracks players sitting and standing. Uses global database to determine valid seats colors. --
 
+-- Tracks players currently sitting, separately from the game's own records.
+-- This allows us to find standing players by comparing this list against the game's.
 local PlayerTracker_sitting = {}
 
+-- Sits the player at the given seat in PlayerTracker_sitting.
+-- @param player_color [string] The color of the seat.
 function PlayerTracker_sit(player_color)
   PlayerTracker_sitting[player_color] = Player[player_color].steam_id
 end
 
+-- Stands the seat in PlayerTracker_sitting.
+-- @param player_color [string] The color of the seat.
 function PlayerTracker_stand(player_color)
   PlayerTracker_sitting[player_color] = nil
 end
 
+-- Checks if a given color is a valid seat.
+-- @param player_color [string] The color of the seat.
+-- @returns [boolean] Whether or not the seat is valid.
 function PlayerTracker_isValid(player_color)
+  -- Iterate through all valid players.
   for _, v in ipairs(valid_players) do
+    -- If the given color matches, return true.
     if v == player_color then
       return true
     end
   end
+  -- If none matched, return false.
   return false
 end
 
+-- Checks if a player seated at a given color is an admin.
+-- @param player_color [string] player_color The color of the seat.
+-- @returns [boolean] Whether or not the player is an admin.
 function PlayerTracker_isAdmin(player_color)
   return Player[player_color].admin
 end
 
+-- Finds all players currently standing according to discrepancies between
+-- PlayerTracker_sitting and the game's records.
+-- @returns [object] A map of player color : player id of standing players.
 function PlayerTracker_findStanding()
+  -- Initialize the map.
   local retval = {}
+  -- Iterate through our records of sitting players.
   for player_color, player_id in pairs(PlayerTracker_sitting) do
+    -- If the game says the player isn't sitting, add them to the list.
     if not Player[player_color].seated then
       retval[player_color] = player_id
     end
@@ -33,6 +54,9 @@ function PlayerTracker_findStanding()
   return retval
 end
 
+-- Checks whether or not a player is seated at a given seat color.
+-- @param player_color [string] player_color The color of the seat.
+-- @returns [boolean] Whether or not someone is seated there.
 function PlayerTracker_isSeated(player_color)
   return Player[player_color].seated
 end

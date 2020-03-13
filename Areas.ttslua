@@ -1,5 +1,10 @@
 -- Works with global databases to find relative areas given centers --
 
+-- Finds the area with the given name, and rotates it around the center with the given name.
+-- @param center_name [string] The name of the center of the area.
+-- @param area_name [string] The name of the area in the area.
+-- @return [vector] The position of the area relative to the center.
+-- TODO: Figure out better wording for this.
 function Areas_getArea(center_name, area_name)
   return Util_rotateAaroundB(areas[area_name], centers[center_name], 0)
 end

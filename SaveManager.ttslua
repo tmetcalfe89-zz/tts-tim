@@ -2,6 +2,8 @@
 
 -- Grabs the player save bag from the main save bag.
 -- Delivers it to the player.
+-- @param player_color [string] The color of the player's seat.
+-- @returns [boolean] Whether or not the operation was successful. TODO: Expand this into error codes.
 function SaveManager_fetchPlayerSave(player_color)
   if not PlayerTracker_isValid(player_color) then
     return false
@@ -17,41 +19,50 @@ end
 -- Creates a new player save bag by cloning one of the given tier.
 -- Delivers it to the player.
 -- Names it after that player.
+-- @param player_color [string] The color of the player's seat.
 function SaveManager_createPlayerSave(player_color)
+  -- If the player color isn't valid, fail.
   if not PlayerTracker_isValid(player_color) then
     return
   end
 
+  -- Clone a bag from the blank saves bag and give it to the player.
   Bags_cloneFromBag("blank_saves", {
     index = 0,
     shuffle = true,
     position = Areas_getArea(player_color, "drop_off"),
     on_success =
     function(new_save)
+      -- Set the name of the player save.
       new_save.setName("Player save: "..Player[player_color].steam_name)
-      Locks_giveTo(new_save, {player_color = player_color})
     end
   })
 end
 
 -- Stashes all the player's stuff in their player save bag.
 -- Stashes their player save bag in the main save bag.
+-- @param player_id [string] The id of the player.
 function SaveManager_stashPlayerSave(player_id)
+  -- Get the player's belongings.
   local player_belongings = Locks_getPlayerBelongings(player_id)
+  -- Search for the player's save bag.
   local player_save_bag
   for _, player_belonging in ipairs(player_belongings) do
     if player_belonging.getName():sub(1,13) == "Player save: " then
       player_save_bag = player_belonging
     end
   end
+  -- If somehow the player doesn't have a save bag, tell the admin.
   if player_save_bag == nil then
     log("Error finding player save bag for id "..player_id..".")
     return
   end
+  -- Stash all the player's belongings in their bag.
   for _, player_belonging in ipairs(player_belongings) do
     if player_belonging ~= player_save_bag then
       player_save_bag.putObject(player_belonging)
     end
   end
+  -- Put the player's bag in the main save.
   Bags_putInBag("main_save", player_save_bag)
 end

@@ -1,24 +1,46 @@
 -- Works with global databases to find bags by name --
 
-function Bags_getBagGuid(name)
-  return bags[name]
+-- Translates a name into a bag's GUID.
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @returns [string] The GUID of the bag.
+function Bags_getBagGuid(bag_name)
+  return bags[bag_name]
 end
 
-function Bags_getBagByName(name)
-  return getObjectFromGUID(Bags_getBagGuid(name))
+-- Gets the bag object from a given name.
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @returns [object] The bag object.
+function Bags_getBagByName(bag_name)
+  return getObjectFromGUID(Bags_getBagGuid(bag_name))
 end
 
+-- Determines whether or not the searched for object exists in the bag with the given name.
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @param options.index [number] The index of the matching object. First priority.
+-- @param options.guid [string] The GUID of the matching object. Second priority.
+-- @param options.name [string] The name of the matching object. Second priority.
+-- @returns [boolean] Whether or not the object exists.
 function Bags_isInBag(bag_name, options)
   return Bags_findInBag(bag_name, options) ~= -1
 end
 
+-- Determines the index of the object matching the searched for options.
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @param options.index [number] The index of the matching object. First priority.
+-- @param options.guid [string] The GUID of the matching object. Second priority.
+-- @param options.name [string] The name of the matching object. Second priority.
+-- @returns [number] The index of the matching object. -1 if none matched.
 function Bags_findInBag(bag_name, options)
+  -- If there's an index in options, just use it.
   if options["index"] then
     return options["index"]
   end
 
+  -- Get the bag.
   local bag = Bags_getBagByName(bag_name)
+  -- Iterate through the bag's objects.
   for i, v in ipairs(bag.getObjects()) do
+    -- If the object's guid or name matches the search options, return its index.
     if v.guid == options.guid then
       return i - 1
     end
@@ -26,18 +48,46 @@ function Bags_findInBag(bag_name, options)
       return i - 1
     end
   end
+  -- If no objects matched, return -1.
   return -1
 end
 
+-- Takes the first object matching the search options.
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @param options.index [number] The index of the matching object. First priority.
+-- @param options.guid [string] The GUID of the matching object. Second priority.
+-- @param options.name [string] The name of the matching object. Second priority.
+-- @param options.position [vector] Where to place the matching object. Defaults to vector(0, 3, 0).
+-- @param options.rotation [vector] How to rotate the matching object. Defaults to vector(0, 0, 0).
+-- @param options.shuffle [boolean] Whether or not to shuffle the bag before searching. Defaults to false.
+-- @param options.smooth [boolean] Whether or not the movement should be smooth. Defaults to false for performance reasons.
+-- @param options.on_success [function] Called when an object successfully matches and is taken from the bag. Optional.
+-- @param options.on_failure [function] Called when no matching object was found. Optional.
+-- @returns [boolean] Whether or not the operation was successful. TODO: Expand this into error codes.
 function Bags_takeFromBag(bag_name, options)
+  -- Get the bag.
   local bag = Bags_getBagByName(bag_name)
 
+  -- Fail the procedure if the bag isn't found.
+  if bag == nil then
+    log("Could not find bag with name "..bag_name)
+    -- If there's a failure callback, call it.
+    if options["on_failure"] then
+      options["on_failure"]()
+    end
+    return false
+  end
+
+  -- Shuffle the bag if necessary.
   if options["shuffle"] then
     bag.shuffle()
   end
 
+  -- Determine if there is an object in the bag matching the options.
   if Bags_isInBag(bag_name, options) then
+    -- Find the index of the matching object.
     local i = Bags_findInBag(bag_name, options)
+    -- Take the object from the bag.
     bag.takeObject({
       index = i,
       position = options["position"] or nil,
@@ -45,6 +95,7 @@ function Bags_takeFromBag(bag_name, options)
       smooth = options["smooth"] or false,
       callback_function =
       function(object_spawned, name)
+        -- If there's a success callback, call it.
         if options["on_success"] then
           options["on_success"](object_spawned)
         end
@@ -52,6 +103,7 @@ function Bags_takeFromBag(bag_name, options)
     })
     return true
   else
+    -- If there's a failure callback, call it.
     if options["on_failure"] then
       options["on_failure"]()
     end
@@ -59,15 +111,42 @@ function Bags_takeFromBag(bag_name, options)
   end
 end
 
+-- Clones the first object matching the search options.
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @param options.index [number] The index of the matching object. First priority.
+-- @param options.guid [string] The GUID of the matching object. Second priority.
+-- @param options.name [string] The name of the matching object. Second priority.
+-- @param options.position [vector] Where to place the clone of the matching object. Defaults to vector(0, 3, 0).
+-- @param options.rotation [vector] How to rotate the clone of the matching object. Defaults to vector(0, 0, 0).
+-- @param options.shuffle [boolean] Whether or not to shuffle the bag before searching. Defaults to false.
+-- @param options.smooth [boolean] Whether or not the movement should be smooth. Defaults to false for performance reasons.
+-- @param options.on_success [function] Called when an object successfully matches and is taken from the bag. Optional.
+-- @param options.on_failure [function] Called when no matching object was found. Optional.
+-- @returns [boolean] Whether or not the operation was successful. TODO: Expand this into error codes.
 function Bags_cloneFromBag(bag_name, options)
+  -- Get the bag.
   local bag = Bags_getBagByName(bag_name)
 
+  -- Fail the procedure if the bag isn't found.
+  if bag == nil then
+    log("Could not find bag with name "..bag_name)
+    -- If there's a failure callback, call it.
+    if options["on_failure"] then
+      options["on_failure"]()
+    end
+    return false
+  end
+
+  -- Shuffle the bag if necessary.
   if options["shuffle"] then
     bag.shuffle()
   end
 
+  -- Determine if there is an object in the bag matching the options.
   if Bags_isInBag(bag_name, options) then
+    -- Find the index of the matching object.
     local i = Bags_findInBag(bag_name, options)
+    -- Clone the object from the bag.
     bag.takeObject({
       index = i,
       smooth = options["smooth"] or false,
@@ -77,6 +156,8 @@ function Bags_cloneFromBag(bag_name, options)
           position = options["position"]
         })
         bag.putObject(object_spawned)
+        -- If there's a success callback, call it when the object is done cloning.
+        -- NOTE: TTS has a small glitch where it'll say it's done cloning before the new object has its new GUID. Thus, the Wait.condition call.
         if options["on_success"] then
           Wait.condition(
             function()
@@ -92,6 +173,7 @@ function Bags_cloneFromBag(bag_name, options)
     })
     return true
   else
+    -- If there's a failure callback, call it.
     if options["on_failure"] then
       options["on_failure"]()
     end
@@ -99,12 +181,29 @@ function Bags_cloneFromBag(bag_name, options)
   end
 end
 
+-- Searches for and clones items matching all of the given search options (in clone_list).
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @param clone_list [array] An array of objects containing the search options.
+-- @param clone_list[i].index [number] The index of the matching object. First priority.
+-- @param clone_list[i].guid [string] The GUID of the matching object. Second priority.
+-- @param clone_list[i].name [string] The name of the matching object. Second priority.
+-- @param options.position [vector] Where to place the clone of the matching object. Defaults to vector(0, 3, 0).
+-- @param options.rotation [vector] How to rotate the clone of the matching object. Defaults to vector(0, 0, 0).
+-- @param options.shuffle [boolean] Whether or not to shuffle the bag before searching. Defaults to false.
+-- @param options.smooth [boolean] Whether or not the movement should be smooth. Defaults to false for performance reasons.
+-- @param options.on_success [function] Called when an object successfully matches and is taken from the bag. Optional.
+-- @param options.on_failure [function] Called when no matching object was found. Optional.
 function Bags_cloneAllFromBag(bag_name, clone_list, options)
+  -- Grab the number of objects in the bag for later comparison.
   local bag_count = #Bags_getBagByName(bag_name).getObjects()
+  -- Keep track of how many we've successfully cloned.
   local clone_complete = 0
+  -- Iterate through all objects on the clone list.
   for i, v in ipairs(clone_list) do
+    -- Launch a condition wait for each item on the clone list, unifying the search options with the procedure options.
     Wait.condition(
       function()
+        -- Clone the object from the bag.
         Bags_cloneFromBag(bag_name, {
           index = v.index,
           guid = v.guid,
@@ -112,19 +211,23 @@ function Bags_cloneAllFromBag(bag_name, clone_list, options)
           shuffle = options.shuffle,
           smooth = options.smooth,
           position = options.position,
-          on_success = options.on_success,
-          on_failure = options.failure
+          on_success = options.on_success, -- NOTE: This is currently broken.
+          on_failure = options.failure -- NOTE: This is currently broken.
         })
+        -- Increase the complete count.
         clone_complete = clone_complete + 1
       end
       ,
       function()
+        -- Return true if all items that started out in the bag are currently in the bag.
         return #Bags_getBagByName(bag_name).getObjects() == bag_count
       end
     )
   end
+  -- Launch a condition to wait until all clones are complete.
   Wait.condition(
     function()
+      -- Wait a frame to launch the finished condition. I'm not sure why. Probably bad design on my part.
       Wait.frames(
         function()
           if options["on_finished"] then
@@ -137,11 +240,15 @@ function Bags_cloneAllFromBag(bag_name, clone_list, options)
     end
     ,
     function()
+      -- Wait until all clones are completed.
       return clone_complete == #clone_list
     end
   )
 end
 
+-- Puts a given object in a bag with the given name.
+-- @param bag_name [string] The name of the bag, as stored in the bag database.
+-- @param object [object] The object to put away.
 function Bags_putInBag(bag_name, object)
   local bag = Bags_getBagByName(bag_name)
   bag.putObject(object)
