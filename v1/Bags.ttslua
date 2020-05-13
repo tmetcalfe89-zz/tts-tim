@@ -153,22 +153,21 @@ function Bags_cloneFromBag(bag_name, options)
       callback_function =
       function(object_spawned, name)
         local object_cloned = object_spawned.clone({
-          position = options["position"]
+          position = vector(object_spawned.getPosition().x, object_spawned.getPosition().y + 5, object_spawned.getPosition().z)
         })
         bag.putObject(object_spawned)
-        -- If there's a success callback, call it when the object is done cloning.
-        -- NOTE: TTS has a small glitch where it'll say it's done cloning before the new object has its new GUID. Thus, the Wait.condition call.
-        if options["on_success"] then
-          Wait.condition(
-            function()
+        Wait.condition(
+          function()
+            object_cloned.setPosition(options["position"])
+            if options["on_success"] then
               options["on_success"](object_cloned)
             end
-            ,
-            function()
-              return object_cloned.guid ~= object_spawned.guid
-            end
-          )
-        end
+          end
+          ,
+          function()
+            return object_cloned.guid ~= object_spawned.guid
+          end
+        )
       end
     })
     return true
@@ -193,57 +192,42 @@ end
 -- @param options.smooth [boolean] Whether or not the movement should be smooth. Defaults to false for performance reasons.
 -- @param options.on_success [function] Called when an object successfully matches and is taken from the bag. Optional.
 -- @param options.on_failure [function] Called when no matching object was found. Optional.
-function Bags_cloneAllFromBag(bag_name, clone_list, options)
-  -- Grab the number of objects in the bag for later comparison.
-  local bag_count = #Bags_getBagByName(bag_name).getObjects()
-  -- Keep track of how many we've successfully cloned.
-  local clone_complete = 0
-  -- Iterate through all objects on the clone list.
-  for i, v in ipairs(clone_list) do
-    -- Launch a condition wait for each item on the clone list, unifying the search options with the procedure options.
-    Wait.condition(
-      function()
-        -- Clone the object from the bag.
-        Bags_cloneFromBag(bag_name, {
-          index = v.index,
-          guid = v.guid,
-          name = v.name,
-          shuffle = options.shuffle,
-          smooth = options.smooth,
-          position = options.position,
-          on_success = options.on_success, -- NOTE: This is currently broken.
-          on_failure = options.failure -- NOTE: This is currently broken.
-        })
-        -- Increase the complete count.
-        clone_complete = clone_complete + 1
-      end
-      ,
-      function()
-        -- Return true if all items that started out in the bag are currently in the bag.
-        return #Bags_getBagByName(bag_name).getObjects() == bag_count
-      end
-    )
+function Bags_cloneAllFromBag(bag_name, clone_list, options, index)
+  if index == nil then
+    index = 1
   end
-  -- Launch a condition to wait until all clones are complete.
-  Wait.condition(
-    function()
-      -- Wait a frame to launch the finished condition. I'm not sure why. Probably bad design on my part.
-      Wait.frames(
-        function()
-          if options["on_finished"] then
-            options.on_finished()
+  local v = clone_list[index]
+  local bag_count = #Bags_getBagByName(bag_name).getObjects()
+  Bags_cloneFromBag(bag_name, {
+    index = v.index,
+    guid = v.guid,
+    name = v.name,
+    shuffle = options.shuffle,
+    smooth = options.smooth,
+    position = options.position,
+    on_success = function()
+      if options["on_success"] then
+        options["on_success"]()
+      end
+      if index < #clone_list then
+        Wait.condition(
+          function()
+            Bags_cloneAllFromBag(bag_name, clone_list, options, index + 1)
           end
-        end
-        ,
-        1
-      )
+          ,
+          function()
+            return #Bags_getBagByName(bag_name).getObjects() == bag_count
+          end
+        )
+      end
     end
     ,
-    function()
-      -- Wait until all clones are completed.
-      return clone_complete == #clone_list
+    on_failure = function()
+      if options["on_failure"] then
+        options["on_failure"]()
+      end
     end
-  )
+  })
 end
 
 -- Puts a given object in a bag with the given name.

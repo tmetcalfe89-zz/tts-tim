@@ -4,16 +4,18 @@
 -- Values cannot have a decimal value because of rounding issues. I recommend multiplying the value of the currency by 100 if you need cents.
 
 -- Gets the value of the given type from a given currency object.
--- @param object [object] The given currency object.
+-- @param description [string] The description of the given currency object.
 -- @param currency_type [string] The name of the currency type.
 -- @returns [number] The value of the currency, or 0 if none exists.
-function Currency_getValue(object, currency_type)
-  return tonumber(Currency_getValues(object)[currency_type]) or 0
-  -- return tonumber(DescriptionParser_getValue(object, "C_"..currency_type)) or 0
+function Currency_getValue(description, currency_type)
+  return tonumber(Currency_getValues(description)[currency_type]) or 0
 end
 
-function Currency_getValues(object)
-  local currency_values_string = DescriptionParser_getValue(object, "Currency")
+-- Gets all currency types and values from a given currency object.
+-- @param description [string] The description of the given currency object.
+-- @returns [object] All currency types and their values.
+function Currency_getValues(description)
+  local currency_values_string = DescriptionParser_getValue(description, "Currency")
   local retval = {}
   for currency_type, currency_value in pairs(Util_splitStringIntoMap(currency_values_string, ",", ".")) do
     retval[currency_type] = tonumber(currency_value) or 0
@@ -37,7 +39,7 @@ function Currency_getPlayerValue(player_id, currency_type)
       object_count = 1
     end
     -- If the object's currency type matches the given currency type, add its value to the accumulator.
-    value = value + Currency_getValue(object, currency_type) * object_count
+    value = value + Currency_getValue(object.getDescription(), currency_type) * object_count
   end
   -- Return the accumulated value.
   return value
@@ -49,16 +51,16 @@ end
 -- @param currency_object [object] The currency that is entering the bag.
 function Currency_stashCurrency(bag, currency_object)
   -- Get the values attached to the object.
-  local currency_values = Currency_getValues(currency_object)
+  local currency_values = Currency_getValues(currency_object.getDescription())
   -- If the object has values and the bag is in fact a bag...
   if Util_tableHasEntries(currency_values) and bag.tag == "Bag" then
     -- Get the values attached to the bag.
-    local bag_currency_values = Currency_getValues(bag)
+    local bag_currency_values = Currency_getValues(bag.getDescription())
     -- Figure out how many there are in a given object. This accounts for stacks.
     local object_count = Util_getStackSize(currency_object)
     -- Iterate through all values attached to the object and add them to the bag's values.
     for currency_type, currency_value in pairs(currency_values) do
-      bag_currency_values[currency_type] = Currency_getValue(bag, currency_type) + currency_value * object_count
+      bag_currency_values[currency_type] = Currency_getValue(bag.getDescription(), currency_type) + currency_value * object_count
     end
     DescriptionParser_addValue(bag, "Currency", Util_joinMapToString(bag_currency_values, ",", "."))
   end
@@ -70,16 +72,16 @@ end
 -- @param currency_object [object] The currency that is leaving the bag.
 function Currency_unstashCurrency(bag, currency_object)
   -- Get the values attached to the object.
-  local currency_values = Currency_getValues(currency_object)
+  local currency_values = Currency_getValues(currency_object.getDescription())
   -- If the object has values and the bag is in fact a bag...
   if Util_tableHasEntries(currency_values) and bag.tag == "Bag" then
     -- Get the values attached to the bag.
-    local bag_currency_values = Currency_getValues(bag)
+    local bag_currency_values = Currency_getValues(bag.getDescription())
     -- Figure out how many there are in a given object. This accounts for stacks.
     local object_count = Util_getStackSize(currency_object)
     -- Iterate through all values attached to the object and subtract them from the bag's values.
     for currency_type, currency_value in pairs(currency_values) do
-      bag_currency_values[currency_type] = Currency_getValue(bag, currency_type) - currency_value * object_count
+      bag_currency_values[currency_type] = Currency_getValue(bag.getDescription(), currency_type) - currency_value * object_count
       -- If the current currency type is gone, remove it from the description.
       if bag_currency_values[currency_type] <= 0 then
         bag_currency_values[currency_type] = nil

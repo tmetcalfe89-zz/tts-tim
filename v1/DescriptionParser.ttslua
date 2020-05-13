@@ -1,3 +1,5 @@
+#include Util
+
 -- Parses a map of key/value pairs from an object's description. --
 -- Allows for simple in-game editing of values.
 
@@ -17,12 +19,12 @@ function DescriptionParser_changeOptions(options)
 end
 
 -- Gets an object's value associated with a given key.
--- @param object [object] The object who should hold the pair.
+-- @param description [string] The description to search.
 -- @param key [string] The key to search for.
 -- @returns The value matching the key. Returns nil if none were found.
-function DescriptionParser_getValue(object, key)
+function DescriptionParser_getValue(description, key)
   -- Split the description up into an array of key/value pairs.
-  local map = Util_splitStringIntoMap(object.getDescription(), DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter)
+  local map = Util_splitStringIntoMap(description, DescriptionParser_options.entry_delimiter, DescriptionParser_options.pair_delimiter)
   -- Iterate through those key/value pairs.
   for k, v in pairs(map) do
     -- If the key matches the given key, return it.

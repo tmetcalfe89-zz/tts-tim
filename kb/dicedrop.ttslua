@@ -1,0 +1,59 @@
+#include ../DescriptionParser
+
+local dice = {}
+
+function onLoad(save_state)
+  for i, v in ipairs(getObjectFromGUID("7d51d1").getObjects()) do
+    registerDice(v)
+  end
+  for i, v in ipairs(getObjectFromGUID("1a06da").getObjects()) do
+    if (DescriptionParser_getValue(v.getDescription(), "Typsdae") == "Dice") then
+      registerDice(v)
+    end
+  end
+end
+
+function onObjectEnterScriptingZone(zone, enter_object)
+  if zone.getGUID() == "7d51d1" and DescriptionParser_getValue(enter_object.getDescription(), "Hotspot") == "Dice" then
+    Wait.frames(function() enter_object.setVelocity({0, 0, 0}) end, 10)
+    registerDice(enter_object)
+  end
+end
+
+function onCollisionEnter(collision_info)
+  local obj = collision_info.collision_object
+  if obj.is_face_down or DescriptionParser_getValue(obj.getDescription(), "Dice") == nil then
+    return
+  end
+  returnBowlDice()
+  addBowlDice(obj)
+end
+
+function returnBowlDice()
+  local current_dice = getObjectFromGUID("1a06da").getObjects()
+  local target_position = getObjectFromGUID("7d51d1").getPosition()
+  for i, v in ipairs(current_dice) do
+    target_position.y = target_position.y + 1
+    if (DescriptionParser_getValue(v.getDescription(), "Hotspot") == "Dice") then
+      v.setPosition(target_position)
+    end
+  end
+end
+
+function addBowlDice(card)
+  local needed_dice = DescriptionParser_getValue(card.getDescription(), "Dice")
+  local target_position = getObjectFromGUID("293750").getPosition()
+  target_position.y = 5
+  local alternator = 1
+  for i, v in ipairs(Util_splitStringIntoArray(needed_dice, ",")) do
+    target_position.z = target_position.z + ((i - 1) * alternator)
+    alternator = alternator * -1
+    local needed_die = getObjectFromGUID(dice[v])
+    needed_die.setPosition(target_position)
+    needed_die.roll()
+  end
+end
+
+function registerDice(new_dice)
+  dice[new_dice.getName()] = new_dice.getGUID()
+end

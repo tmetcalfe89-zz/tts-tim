@@ -5,58 +5,18 @@ local BankManager_currencyList = {}
 -- Whether or not the BankManager has completed the currency list.
 local BankManager_ready = false
 
--- Builds the currency list from the currency bank bag. This function doesn't
--- actually do the math, it just grabs all objects in the currency bank, and
--- drops them back in the currency bank. addCurrency is called when an object
--- enters the currency bank, and adds the currency to the list.
 function BankManager_buildCurrencyList()
-  log("Initializing currency list")
   BankManager_ready = false
 
-  -- Grab the currency bank bag.
-  local currency_bank = getObjectFromGUID(bags.currency_bank)
-  -- Grab the number of items in the bag.
-  local currency_count = #currency_bank.getObjects()
-  -- Iterate through all objects in the currency bank bag.
-  for i=1,currency_count do
-    -- Take the top object from the currency bank bag. Drop it a little above the bag.
-    Bags_takeFromBag("currency_bank", {
-      index = 0,
-      position = vector(13, 4.17 + i, 55), -- TODO: Remove fixed vector. Bad.
-      on_success =
-      function(currency)
-        -- If this is the last one...
-        if i == currency_count then
-          -- Wait for all of the objects to return to the currency bank bag, then become ready.
-          Wait.condition(
-            function()
-              BankManager_ready = true
-              log("Currency list created")
-            end
-            ,
-            function()
-              return #currency_bank.getObjects() == currency_count
-            end
-          )
-        end
-      end
+  BankManager_currencyList = {}
+  local currency_bank_objects = Bags_getBagByName("currency_bank").getObjects()
+  for i, v in ipairs(currency_bank_objects) do
+    table.insert(BankManager_currencyList, {
+      guid = v.guid,
+      values = Currency_getValues(v.description)
     })
   end
-end
-
--- Adds the given currency to the currency list.
--- @param currency [object] The currency whose values will be added to the list.
--- @returns [boolean] Whether or not the operation was successful. TODO: Expand this into error codes.
-function BankManager_addCurrency(currency)
-  local values = Currency_getValues(currency)
-  if Util_getTableSize(values) == 0 then
-    return false
-  end
-  table.insert(BankManager_currencyList, {
-    guid = currency.guid,
-    values = values
-  })
-  return true
+  BankManager_ready = true
 end
 
 -- Gives the player with the given color the given amount of currency in the given currency type.

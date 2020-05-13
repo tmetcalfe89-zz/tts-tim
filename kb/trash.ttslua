@@ -1,0 +1,64 @@
+#include ../DescriptionParser
+
+local discards = {
+  Cabbage = {
+    position = {-9, 3, -5.5},
+    rotation = {0, 270, 0}
+  },
+  Water = {
+    position = {-9, 3, -7},
+    rotation = {0, 270, 0}
+  },
+  Defense = {
+    position = {-6, 3, -4},
+    rotation = {0, 270, 0}
+  },
+  Discard = {
+    position = {3, 3, 4.5},
+    rotation = {0, 180, 0}
+  },
+  Dolla = {
+    position = {3, 3, 0},
+    rotation = {0, 180, 0}
+  },
+  Weapons = {
+    position = {3, 3, -3.5},
+    rotation = {0, 180, 0}
+  },
+  Bunny = {
+    position = {3, 3, -7},
+    rotation = {0, 180, 0}
+  },
+  Radish = {
+    position = {9, 3, -5.5},
+    rotation = {0, 270, 0}
+  },
+  Milk = {
+    position = {9, 3, -7},
+    rotation = {0, 270, 0}
+  },
+  Copper = {
+    position = {0.00, 3, -3.25},
+    rotation = {0, 270, 0}
+  },
+  Silver = {
+    position = {0.00, 3, -5.75},
+    rotation = {0, 270, 0}
+  },
+  Gold = {
+    position = {0.00, 3, -8.25},
+    rotation = {0, 270, 0}
+  }
+}
+
+function filterObjectEnter(enter_object)
+  local discardPile = DescriptionParser_getValue(enter_object.getDescription(), "Discard")
+
+  if discardPile ~= nil then
+    enter_object.setVelocity({0, 0, 0})
+    enter_object.setPosition(discards[discardPile].position)
+    enter_object.setRotation(discards[discardPile].rotation)
+  end
+
+  return false
+end

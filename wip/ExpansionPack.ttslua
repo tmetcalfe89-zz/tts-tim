@@ -1,0 +1,49 @@
+#include DescriptionParser
+
+-- ExpansionPack allows you to:
+-- *Provide a standard-but-flexible format to organize content into expansion packs.
+-- *Allow users to add/remove expansion packs at the start of their game.
+-- *Automatically places expansion pack contents where they should go.
+
+EP_hotspots = {}
+
+function EP_registerHotspot(hotspot_GUID)
+  hotspot = getObjectFromGUID(hotspot_GUID)
+  hotspot_type = DescriptionParser_getValue(hotspot.getDescription(), "Hotspot")
+  EP_hotspots[hotspot_type] = hotspot_GUID
+end
+
+function EP_isExpansionPack(expansion_GUID)
+  expansion = getObjectFromGUID(expansion_GUID)
+  isExpansionPack = DescriptionParser_getValue(expansion.getDescription(), "Type")
+  return (isExpansionPack == "Expansion")
+end
+
+function EP_addToPlay(expansion_GUID)
+  expansion = getObjectFromGUID(expansion_GUID)
+
+  mill = {}
+  for k, v in pairs(expansion.getObjects()) do
+    type = DescriptionParser_getValue(v.description, "Type")
+    hotspot_GUID = EP_hotspots[type]
+    hotspot_pos = getObjectFromGUID(hotspot_GUID).getPosition()
+    hotspot_pos.y = 5
+    mill[v.guid] = {
+      guid = v.guid,
+      pos = hotspot_pos
+    }
+  end
+  for k, v in pairs(mill) do
+    expansion.takeObject({
+      position          = v["pos"],
+      rotation          = {0, 0, 180},
+      smooth            = false,
+      guid              = v["guid"]
+    })
+  end
+
+  expansion_name = DescriptionParser_getValue(expansion.getDescription(), "Expansion")
+  print("Expansion loaded: "..expansion_name)
+
+  --expansion.destruct()
+end

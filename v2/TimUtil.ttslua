@@ -1,0 +1,53 @@
+local TimUtil = {}
+
+TimUtil["splitStringIntoMap"] = function(input, entry_delim, pair_delim)
+  local map = {}
+  if input == nil or input == "" then
+    return map
+  end
+  local split = TimUtil.splitStringIntoArray(input, entry_delim)
+  for _, pair in ipairs(split) do
+    local split_pair = TimUtil.splitStringIntoPair(pair, pair_delim)
+    for key, value in pairs(split_pair) do
+      map[key] = value
+    end
+  end
+  return map
+end
+
+TimUtil["splitStringIntoArray"] = function(input, delim)
+  local arr = {}
+  local i = 1
+  for str in string.gmatch(input, "([^"..delim.."]+)") do
+    arr[i] = str
+    i = i + 1
+  end
+  return arr
+end
+
+TimUtil["splitStringIntoPair"] = function(input, delim)
+  local i = 1
+  local key
+  local value
+  for str in string.gmatch(input, "([^" .. delim .. "]+)") do
+    if i == 1 then
+      key = str
+    end
+    if i == 2 then
+      value = str
+    end
+    i = i + 1
+  end
+
+  local pair = {}
+  pair[key] = value
+  return pair
+end
+
+TimUtil["joinMapToString"] = function (map, entry_delimiter, pair_delimiter)
+  local retval = ""
+  for key, value in pairs(map) do
+    retval = retval..key..pair_delimiter..value..entry_delimiter
+  end
+  return retval:sub(1, #retval - #entry_delimiter)
+end

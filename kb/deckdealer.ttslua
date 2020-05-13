@@ -1,0 +1,116 @@
+#include ../DescriptionParser
+
+local button_add = {
+  click_function = "addBox",
+  function_owner = self,
+  label = "+",
+  position = {4, 5.1, 4},
+  scale = {1.5, 1.5, 1.5},
+  width = 600,
+  height = 600,
+  font_size = 600
+}
+
+local button_added = {
+  click_function = "doNothing",
+  function_owner = self,
+  label = "+",
+  position = {4, 5.1, 4},
+  scale = {1.5, 1.5, 1.5},
+  width = 600,
+  height = 600,
+  font_size = 600,
+  color = {r=0.62, g=0.62, b=0.62}
+}
+
+local button_remove = {
+  click_function = "removeBox",
+  function_owner = self,
+  label = "Remove",
+  position = {0, 5.1, 4},
+  scale = {1.5, 1.5, 1.5},
+  width = 2000,
+  height = 400,
+  font_size = 400
+}
+
+local hotspots = {
+  ["Deck"] = {position = {0, 3, 4.5}, rotation = {0, 180, 180}},
+  ["Carrots"] = {position = {-12.00, 1.77, 0.00}, rotation = {0, 180, 0}},
+  ["SmallCarrots"] = {position = {-12.00, 1.83, -2.50}, rotation = {0, 270, 180}},
+  ["Kaballas"] = {position = {-9.00, 1.56, 0.00}, rotation = {0, 180, 0}},
+  ["Cabbage"] = {position = {-9.00, 1.62, -2.50}, rotation = {0, 270, 180}},
+  ["Water"] = {position = {-9.00, 1.62, -4.00}, rotation = {0, 270, 180}},
+  ["Rooneys"] = {position = {-6.00, 1.56, 0.00}, rotation = {0, 180, 0}},
+  ["Defense"] = {position = {-6.00, 1.73, -2.50}, rotation = {0, 270, 180}},
+  ["Weils"] = {position = {-3.00, 1.56, 0.00}, rotation = {0, 180, 0}},
+  ["SmallZodiac"] = {position = {-12.00, 1.65, -4.00}, rotation = {0, 270, 180}},
+  ["SmallMysteriousPlace"] = {position = {-12.00, 1.61, -5.50}, rotation = {0, 270, 180}},
+  ["Dice"] = {position = {11.79, 4.03, -15.89}, rotation = {0, 0, 0}},
+  ["BluePawn"] = {position = {-3.50, 1.49, -2.25}, rotation = {0, 0, 0}},
+  ["YellowPawn"] = {position = {-2.50, 1.49, -2.25}, rotation = {0, 0, 0}},
+  ["VioletPawn"] = {position = {-3.50, 1.49, -3.40}, rotation = {0, 0, 0}},
+  ["OrangePawn"] = {position = {-2.50, 1.49, -3.35}, rotation = {0, 0, 0}},
+  ["GreenPawn"] = {position = {-3.50, 1.49, -4.55}, rotation = {0, 0, 0}},
+  ["RedPawn"] = {position = {-2.50, 1.49, -4.55}, rotation = {0, 0, 0}},
+  ["BlackPawn"] = {position = {-3.50, 1.49, -5.70}, rotation = {0, 0, 0}},
+  ["WhitePawn"] = {position = {-2.50, 1.49, -5.70}, rotation = {0, 0, 0}},
+  ["PinkPawn"] = {position = {-3.50, 1.49, -6.85}, rotation = {0, 0, 0}},
+  ["Mordens"] = {position = {0.00, 1.55, 0.00}, rotation = {0, 180, 0}},
+  ["Copper"] = {position = {0.00, 1.48, -3.25}, rotation = {0, 270, 0}},
+  ["Silver"] = {position = {0.00, 1.48, -5.75}, rotation = {0, 270, 0}},
+  ["Gold"] = {position = {0.00, 1.48, -8.25}, rotation = {0, 270, 0}},
+  ["CopperDice"] = {position = {-0.75, 1.81, 2.25}, rotation = {270, 0, 0}},
+  ["SilverDice"] = {position = {0.00, 1.81, 2.24}, rotation = {270, 0, 0}},
+  ["GoldDice"] = {position = {0.75, 1.81, 2.24}, rotation = {270, 0, 0}},
+  ["Rooneys2"] = {position = {6.00, 1.55, 0.00}, rotation = {0, 180, 0}},
+  ["Enlisted"] = {position = {6.00, 1.64, -2.50}, rotation = {0, 0, 0}},
+  ["Officer"] = {position = {6.00, 1.64, -4.00}, rotation = {0, 0, 0}},
+  ["Kaballas2"] = {position = {9.00, 1.54, 0.00}, rotation = {0, 180, 0}},
+  ["Radish"] = {position = {9.00, 1.60, -2.50}, rotation = {0, 270, 180}},
+  ["Milk"] = {position = {9.00, 1.60, -4.00}, rotation = {0, 270, 180}},
+  ["YellowBall"] = {position = {-12.00, 1.55, -7.50}, rotation = {0, 180, 0}}
+}
+
+local child = {}
+
+function onLoad(save_state)
+  self.createButton(button_add)
+end
+
+function doNothing() end
+
+function addBox()
+  local hotspot_queue = {}
+  local iMax = 0
+  for i, card in ipairs(self.getObjects()) do
+    local hotspot = DescriptionParser_getValue(card.description, "Hotspot")
+    if hotspot == nil then hotspot = "Deck" end
+    hotspot_queue[i] = hotspot
+    if iMax < i then iMax = i end
+  end
+  processHotspotQueue(hotspot_queue, iMax)
+  self.removeButton(0)
+  self.createButton(button_added)
+
+  if child["onAdd"] ~= nil then
+    child["onAdd"]()
+  end
+end
+
+function processHotspotQueue(hotspot_queue, index)
+  local hotspot = hotspots[hotspot_queue[index]]
+  self.takeObject({
+    position          = hotspot.position,
+    rotation          = hotspot.rotation,
+    index             = i,
+    callback_function = function(card) if index > 1 then processHotspotQueue(hotspot_queue, index - 1) end end,
+    smooth = false
+  })
+end
+
+function removeBox()
+  self.removeButton(0)
+
+  self.createButton(button_add)
+end

@@ -1,0 +1,18 @@
+local ShopManager_tradeList = {}
+local ShopManager_ready = false
+
+function ShopManager_buildTradeList()
+  ShopManager_ready = false
+  ShopManager_tradeList = {}
+
+  local shop_trades = Bags_getBagByName("shop_store").getObjects()
+  for i, v in ipairs(shop_trades) do
+    table.insert(ShopManager_tradeList, {
+      guid = v.guid,
+      name = v.name,
+      cost = Currency_getValues(v.description)
+    })
+  end
+
+  ShopManager_ready = true
+end
