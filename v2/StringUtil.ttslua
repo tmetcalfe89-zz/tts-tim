@@ -1,13 +1,13 @@
-local TimUtil = {}
+local StringUtil = {}
 
-TimUtil["splitStringIntoMap"] = function(input, entry_delim, pair_delim)
+StringUtil["splitStringIntoMap"] = function(input, entry_delim, pair_delim)
   local map = {}
   if input == nil or input == "" then
     return map
   end
-  local split = TimUtil.splitStringIntoArray(input, entry_delim)
+  local split = StringUtil.splitStringIntoArray(input, entry_delim)
   for _, pair in ipairs(split) do
-    local split_pair = TimUtil.splitStringIntoPair(pair, pair_delim)
+    local split_pair = StringUtil.splitStringIntoPair(pair, pair_delim)
     for key, value in pairs(split_pair) do
       map[key] = value
     end
@@ -15,7 +15,7 @@ TimUtil["splitStringIntoMap"] = function(input, entry_delim, pair_delim)
   return map
 end
 
-TimUtil["splitStringIntoArray"] = function(input, delim)
+StringUtil["splitStringIntoArray"] = function(input, delim)
   local arr = {}
   local i = 1
   for str in string.gmatch(input, "([^"..delim.."]+)") do
@@ -25,7 +25,7 @@ TimUtil["splitStringIntoArray"] = function(input, delim)
   return arr
 end
 
-TimUtil["splitStringIntoPair"] = function(input, delim)
+StringUtil["splitStringIntoPair"] = function(input, delim)
   local i = 1
   local key
   local value
@@ -44,7 +44,7 @@ TimUtil["splitStringIntoPair"] = function(input, delim)
   return pair
 end
 
-TimUtil["joinMapToString"] = function (map, entry_delimiter, pair_delimiter)
+StringUtil["joinMapToString"] = function (map, entry_delimiter, pair_delimiter)
   local retval = ""
   for key, value in pairs(map) do
     retval = retval..key..pair_delimiter..value..entry_delimiter
