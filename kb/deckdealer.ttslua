@@ -23,17 +23,6 @@ local button_added = {
   color = {r=0.62, g=0.62, b=0.62}
 }
 
-local button_remove = {
-  click_function = "removeBox",
-  function_owner = self,
-  label = "Remove",
-  position = {0, 5.1, 4},
-  scale = {1.5, 1.5, 1.5},
-  width = 2000,
-  height = 400,
-  font_size = 400
-}
-
 local hotspots = {
   ["Deck"] = {position = {0, 3, 4.5}, rotation = {0, 180, 180}},
   ["Carrots"] = {position = {-12.00, 1.77, 0.00}, rotation = {0, 180, 0}},
@@ -69,7 +58,17 @@ local hotspots = {
   ["Kaballas2"] = {position = {9.00, 1.54, 0.00}, rotation = {0, 180, 0}},
   ["Radish"] = {position = {9.00, 1.60, -2.50}, rotation = {0, 270, 180}},
   ["Milk"] = {position = {9.00, 1.60, -4.00}, rotation = {0, 270, 180}},
-  ["YellowBall"] = {position = {-12.00, 1.55, -7.50}, rotation = {0, 180, 0}}
+  ["YellowBall"] = {position = {-12.00, 1.55, -7.50}, rotation = {0, 180, 0}},
+  ["1Dolla"] = {position = {-12.00, 1.60, 5.50}, rotation = {0.00, 0.00, 0.00}},
+  ["5Dolla"] = {position = {-12.00, 1.60, 3.00}, rotation = {0.00, 0.00, 0.00}},
+  ["1Cabbage"] = {position = {-9.00, 1.60, 5.50}, rotation = {0.00, 0.00, 0.00}},
+  ["5Cabbage"] = {position = {-9.00, 1.60, 3.00}, rotation = {0.00, 0.00, 0.00}},
+  ["1Water"] = {position = {-6.00, 1.60, 5.50}, rotation = {0.00, 0.00, 0.00}},
+  ["5Water"] = {position = {-6.00, 1.60, 3.00}, rotation = {0.00, 0.00, 0.00}},
+  ["1Milk"] = {position = {6.00, 1.60, 5.50}, rotation = {0.00, 0.00, 0.00}},
+  ["5Milk"] = {position = {6.00, 1.60, 3.00}, rotation = {0.00, 0.00, 0.00}},
+  ["1Radish"] = {position = {9.00, 1.60, 5.50}, rotation = {0.00, 0.00, 0.00}},
+  ["5Radish"] = {position = {9.00, 1.60, 3.00}, rotation = {0.00, 0.00, 0.00}}
 }
 
 local child = {}
@@ -107,10 +106,4 @@ function processHotspotQueue(hotspot_queue, index)
     callback_function = function(card) if index > 1 then processHotspotQueue(hotspot_queue, index - 1) end end,
     smooth = false
   })
-end
-
-function removeBox()
-  self.removeButton(0)
-
-  self.createButton(button_add)
 end
