@@ -12,7 +12,7 @@ NotesParser["getValue"] = function(obj, key)
 end
 
 NotesParser["getValueFromNotes"] = function(notes, key)
-  local map = TimUtil.splitStringIntoMap(notes, NotesParser.options.entry_delimiter, NotesParser.options.pair_delimiter)
+  local map = StringUtil.splitStringIntoMap(notes, NotesParser.options.entry_delimiter, NotesParser.options.pair_delimiter)
 
   for k, v in pairs(map) do
     if k == key then
@@ -30,18 +30,23 @@ NotesParser["setValue"] = function(obj, key, value)
     return false
   end
 
-  map = TimUtil.splitStringIntoMap(obj.getGMNotes(), NotesParser.options.entry_delimiter, NotesParser.options.pair_delimiter)
+  if obj.getGMNotes() == "" then
+    map = {}
+  else
+    map = StringUtil.splitStringIntoMap(obj.getGMNotes(), NotesParser.options.entry_delimiter, NotesParser.options.pair_delimiter)
+  end
+
   map[key] = value
   if map[key] == "" then
     map[key] = nil
   end
 
-  obj.setGMNotes(TimUtil.joinMapToString(map, NotesParser.options.entry_delimiter, NotesParser.options.pair_delimiter))
+  obj.setGMNotes(StringUtil.joinMapToString(map, NotesParser.options.entry_delimiter, NotesParser.options.pair_delimiter))
   return true
 end
 
 NotesParser["hasValue"] = function(obj, key)
-  local map = TimUtil.splitStringIntoMap(obj.getGMNotes(), NotesParser.entry_delimiter, NotesParser.pair_delimiter)
+  local map = StringUtil.splitStringIntoMap(obj.getGMNotes(), NotesParser.entry_delimiter, NotesParser.pair_delimiter)
 
   for k, v in pairs(map) do
     if k == v then
